@@ -1,60 +1,69 @@
 -- This script sets Iguana up as a web service for patient name requests.
 -- For each incoming request, Iguana will call the 'main' function.
 
-Webpage  = require 'webpage'  -- Contains our default webpage html string.
-Database = require 'database' -- Contains the database connectivity code.
-Patient  = require 'patient'  -- Contains helper functions for building/formatting patient nodes.
+require 'node'  -- Add the shared module 'node' to this script
+Webpage = require 'webpage'
 
 function main(Data)
+
    -- Parse each incoming request with net.http.parseRequest
    local Request = net.http.parseRequest{data=Data}
+
    -- Get 'LastName' parameter from request
-   if Request.params.FirstName then
-      -- Send LastName to getPatients function to check database and build result
-      local Result, MimeType = getPatients(Request.params.FirstName, Request.params.Format)
-      -- Return the results with net.http.respond
+   if Request.params.LastName then
+      -- Send LastName to PatientSearch function to check database
+      local Result, MimeType = PatientSearch(Request.params.LastName, Request.params.Format)
       net.http.respond{body=Result, entity_type=MimeType}
       return
    end
-	-- If no LastName specified, return the webpage with net.http.respond
-   net.http.respond{body=Webpage.home}
+
+   -- Return the results with net.http.respond
+   net.http.respond{body=Webpage.text}
+
 end
 
-function getPatients(FirstName, Format)
-   -- Search the database connected to in database.lua for the Patients with the requested LastName
-   -- NOTE: Database:quote handles quotes in SQL statement for you
-   local QueryResult = Database:query('SELECT * FROM Patient WHERE FirstName = '..Database:quote(FirstName))
-   -- Build the result as either XML or JSON using the retrieved QueryResult
-   local Result = buildResult(QueryResult, Format)
-   -- Format the result for returning to the browser
-   return formatResult(Result, Format)
-end
+-- Connect to database
+DB = db.connect{api=db.SQLITE, name='Demo/PatientData.sqlite'}
 
-function buildResult(QueryResult, Format)
+function PatientSearch(Name, Format)
    local Result = {}
-   -- Loops through results from the database query
-   for i = 1, #QueryResult do
-      -- Create a blank node in either xml or json format
-      local PatientNode = Patient.createNode(Format)
+   -- Search database for Patient with requested LastName
+   -- NOTE: DB:quote handles quotes in SQL statement for you
+   local R = DB:query('SELECT * FROM Patient WHERE LastName = '..DB:quote(Name))
+   -- Loops through results(R) from the database query
+   for i = 1, #R do
+      local Patient
+      if Format == 'xml' then
+         -- Create an blank XML template
+         Patient = xml.parse{data="<Patient Id='' FirstName='' LastName='' Gender=''/>"}.Patient
+      else
+         -- Create a blank JSON table
+         Patient = {}
+      end
       -- Loops each result to get each field and insert result into 'Patient' table
-      PatientNode.Id        = QueryResult[i].Id
-      PatientNode.FirstName = QueryResult[i].FirstName
-      PatientNode.LastName  = QueryResult[i].LastName
-      PatientNode.Gender    = QueryResult[i].Gender
-      trace(Patient)
-      -- Store the current patient node
-      Result[i] = Patient.formatNode(PatientNode, Format)
-   end
-   return Result
-end
+      Patient.Id        = R[i].Id:nodeValue()
+      Patient.FirstName = R[i].FirstName:nodeValue()
+      Patient.LastName  = R[i].LastName:nodeValue()
+      Patient.Gender    = R[i].Gender:nodeValue()
 
-function formatResult(Result, Format)
-   -- If XML, then concatenate results with table.concat
+      if Format == 'xml' then Result[i] = Patient:S() else Result[i] = Patient end
+   end
+
+   -- If XML, then runs concatenate results with table.concat
    if Format == 'xml' then
-      local Output = "<AllPatients>".. table.concat(Result) .."</AllPatients>"
+      local Output = "<AllPatients>"..table.concat(Result).."</AllPatients>"
       return Output, 'text/xml'
    else
       -- if NOT XML then Serialize 'Result' with json.serialize
       return json.serialize{data=Result}, 'text/plain'
    end
 end
+
+-- This section builds the original hyperlink to test the call to the web server
+Usage=[[
+
+
+
+]]
+
+return Webpage

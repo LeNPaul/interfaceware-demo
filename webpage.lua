@@ -1,6 +1,6 @@
 local Webpage = {}
 
-Webpage.home = [[
+Webpage.text = [[
 
 <!DOCTYPE html>
 <html>
@@ -17,7 +17,6 @@ body {
   text-align: center;
   font-size: 25px;
 }
-
 h1 {
   font-size: 60px;
 }
@@ -28,10 +27,37 @@ h2 {
 p {
   font-size: 40px
 }
+table, th, td {
+    border: 1px solid grey;
+}
+table {
+    border-spacing: 0px;
+}
+th, td {
+    padding: 20\px;
+}
 
 .container {
   margin: 50px auto 50px auto;
 }
+
+.home{
+
+}
+.enterData {
+  margin-top: 250px;
+  display:none;
+}
+.patientInfo {
+  display: none;
+}
+.patientData {
+  margin: 50px;
+  text-align: left;
+  display: none;
+}
+
+
 .new-patient {
   line-height: .1;
   width: 500px;
@@ -78,9 +104,7 @@ p {
   color: white;
 }
 
-.enterData {
-  margin-top: 250px;
-}
+
 
 .inputNames {
   margin: 10px;
@@ -143,23 +167,6 @@ p {
   margin: 50px;
   text-align: left;
 }
-.patientData {
-  margin: 50px;
-  text-align: left;
-}
-table, th, td {
-    border: 1px solid grey;
-}
-table {
-    border-spacing: 0px;
-}
-th, td {
-    padding: 20\px;
-}
-
-h1 {
-  font-size: 60px;
-}
 
   </style>
 
@@ -167,10 +174,50 @@ h1 {
 
 var app = angular.module("myApp", []);
 app.controller("myCtrl", function($scope) {
-  $scope.homeToEnter = function() {
-    $scope.nextPage = {
+  $scope.homeToPatientDataEntry = function() {
+    $scope.homePage = {
       "display": "none"
     }
+    $scope.enterDataPage= {
+      "display": "block"
+    }
+  }
+  $scope.homeToCurrentPatients = function() {
+    $scope.homePage = {
+      "display": "none"
+    }
+    $scope.currentPatientsPage = {
+      "display": "block"
+    }
+  }
+  $scope.backToHome = function() {
+    $scope.homePage = {
+      "display": "block"
+    }
+    $scope.enterDataPage = {
+      "display": "none"
+    }
+    $scope.patientInfoPage = {
+      "display": "none"
+    }
+    $scope.currentPatientsPage = {
+      "dosplay": "none"
+    }
+  }
+
+  function getPatientData(lastName) {
+  $.getJSON('http://localhost:8000/demo?LastName=' + lastName.toString() + '&Format=json', function(data) {
+    console.log(data[0].FirstName);
+    })
+  }
+
+  $scope.searchPatientData = function() {
+    $scope.enterDataPage = {
+      "display": "none"
+    }
+    //Write function that takes inputs and searches for patient data, then goes to the next page to display the patient data
+    getPatientData($scope.lastName);
+    console.log('test');
   }
 });
 
@@ -181,16 +228,16 @@ app.controller("myCtrl", function($scope) {
 
 <div ng-app="myApp" ng-controller="myCtrl" class="container">
 
-  <div class="home" ng-style="nextPage">
-    <button ng-click="homeToEnter()" class="new-patient" type="button"><p>New</p><i class="fa fa-plus" aria-hidden="true"></i></button>
-    <button ng-click="homeToEnter()" class="current-patients" type="button"><p>Current</p><i class="fa fa-bed" aria-hidden="true"></i></button>
+  <div class="home" ng-style="homePage">
+    <button ng-click="homeToPatientDataEntry()" class="new-patient" type="button"><p>New</p><i class="fa fa-plus" aria-hidden="true"></i></button>
+    <button ng-click="homeToCurrentPatients()" class="current-patients" type="button"><p>Current</p><i class="fa fa-bed" aria-hidden="true"></i></button>
   </div>
 
-  <div class="enterData">
-    <input class="inputNames" type="text" placeholder="First Name"/><input class="inputNames" type="text" placeholder="Last Name" /><button class="nextButton"><i class="fa fa-arrow-right" aria-hidden="true"></i></button>
+  <div class="enterData" ng-style="enterDataPage">
+    <button ng-click="backToHome()" class="nextButton"><i class="fa fa-arrow-left" aria-hidden="true"></i></button><input class="inputNames" type="text" placeholder="First Name" ng-model="firstName" /><input class="inputNames" type="text" placeholder="Last Name" ng-model="lastName" /><button ng-click="searchPatientData()" class="nextButton"><i class="fa fa-arrow-right" aria-hidden="true"></i></button>
   </div>
 
-  <div class="patientInfo">
+  <div class="patientInfo" ng-style="patientInfoPage">
     <div class="patient-data">
       <h1>John Doe</h1>
       <h2>Returning Patient</h2>
@@ -200,6 +247,7 @@ app.controller("myCtrl", function($scope) {
       <p>Medical History:</p>
     </div>
     <div class="status">
+      <button ng-click="backToHome()" class="enter-button " type="text"><i class="fa fa-arrow-left" aria-hidden="true"></i></button>
       <button class="green-button status-button" type="text">1</button>
       <button class="yellow-button status-button" type="text">2</button>
       <button class="orange-button status-button" type="text">3</button>
@@ -208,7 +256,8 @@ app.controller("myCtrl", function($scope) {
       <button class="enter-button " type="text"><i class="fa fa-arrow-right" aria-hidden="true"></i></button>
     </div>
   </div>
-  <div class="patientData">
+
+  <div class="patientData" ng-style="currentPatientsPage">
     <h1>Patient Status</h1>
     <table style="width:100%">
       <tr>
@@ -227,7 +276,9 @@ app.controller("myCtrl", function($scope) {
         <td>94</td>
       </tr>
     </table>
+    <button ng-click="backToHome()" class="enter-button " type="text"><i class="fa fa-arrow-left" aria-hidden="true"></i></button>
   </div>
+
 </div>
 
 
