@@ -1,0 +1,25 @@
+<channel
+   name="Demo"
+   guid="7B643A29479A6E45FBE89D5D45FF0CC2"
+   description=""
+   start_automatically="true"
+   logging_level="1"
+   use_message_filter="false">
+   <to_channel>
+   </to_channel>
+   <from_http
+      type="mapper"
+      guid="Demo-FromHTTP-vGNWEr0VTZaKIp"
+      commit_id="668d88abc29a37751f25ede26a175eaade818a95"
+      commit_comment="Fix API address"
+      mapper_url_path="demonstration"/>
+   <message_filter
+      filter_after_logging="false"
+      log_pre_post_filter_message="true"
+      filter_vmd_path=""
+      transformation_mode="0"
+      scripted_transformation_configuration_name="default"
+      error_handling="0"
+      use_translator_filter="true">
+   </message_filter>
+</channel>
